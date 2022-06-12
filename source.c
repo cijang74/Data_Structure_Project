@@ -46,11 +46,17 @@ int flag = 0;
 int flag2 = 0;
 int flag3 = 0;
 int flag4 = 0;
+int stage1_flag = 0;
+int select_turn = 1;
 int test = 0;
 int cc = 0;
 int stage_num = 1;
-Caracter caracter = { "BoiB", 5, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y};
-struct Map_node node[SIZE][SIZE];
+int default_choose = 1;
+
+monster slime = { 4,0,1,0 }; // 이거 반복되면 안됨
+
+Caracter caracter = { "BoiB", 5, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y };
+struct Map_node node[SIZE][SIZE]; // 전역변수
 
 //system("cls")가 필요할 떄는 캐릭터가 행동할 때, 캐릭터의 스테이터스가 변동될 때, 몬스터가 행동할 때, 몬스터의 스테이터스가 변동될 떄, 맵 이동할 떄
 // 전직할 때
@@ -81,7 +87,7 @@ void print_battle_ui(int key)
 {
     switch (key)
     {
-    case 0:
+    case 0: // 아무것도 없슴.
         gotoxy(40, 15);
         printf("／／               ＼＼");
         gotoxy(39, 16);
@@ -130,12 +136,51 @@ void print_battle_ui(int key)
         gotoxy(33, 22);
         printf("／／                                           ＼＼");
         break;
+
+    case 10: // 출구
+        gotoxy(41, 6);
+        printf("──────────────────");
+        gotoxy(41, 7);
+        printf("    옷->ㅁ  출구");
+        gotoxy(41, 8);
+        printf("──────────────────");
+        gotoxy(41, 9);
+        printf("│                │");
+        gotoxy(41, 10);
+        printf("│                │");
+        gotoxy(41, 11);
+        printf("│                │");
+        gotoxy(41, 12);
+        printf("│                │");
+        gotoxy(41, 13);
+        printf("│                │");
+        gotoxy(41, 14);
+        printf("│                │");
+        gotoxy(40, 15);
+        printf("／／               ＼＼");
+        gotoxy(39, 16);
+        printf("／／                   ＼＼");
+        gotoxy(38, 17);
+        printf("／／                       ＼＼");
+        gotoxy(37, 18);
+        printf("／／                           ＼＼");
+        gotoxy(36, 19);
+        printf("／／                               ＼＼");
+        gotoxy(35, 20);
+        printf("／／                                   ＼＼");
+        gotoxy(34, 21);
+        printf("／／                                       ＼＼");
+        gotoxy(33, 22);
+        printf("／／                                           ＼＼");
+        break;
     }
 }
 
 void print_map_ui()
 // 반복되는 함수
 {
+    gotoxy(0, 0);
+    printf("[HP]: %d", caracter.hp);
     gotoxy(UILINE_X, UILINE_Y);
     printf("========================================================================================================================");
 
@@ -211,8 +256,8 @@ void map_node_init()
         {
             for (int j = 0; j < 9; j++)
             {
-                node[i][j].x = REAL_ADD_X+i;
-                node[i][j].y = REAL_ADD_Y+j;
+                node[i][j].x = REAL_ADD_X + i;
+                node[i][j].y = REAL_ADD_Y + j;
                 node[i][j].is_wall = 1; // 처음에는 통과 가능한 지역이 아니라고 해둘거임
                 node[i][j].is_visited = 0;
                 node[i][j].is_item = 0;
@@ -271,34 +316,80 @@ void drop_item(int key)
     switch (key)
     {
     case 1:
-        if (flag3 == 0)
+        
+        while (flag3 == 0)
         {
             stop_move = 1;
             gotoxy(UILINE_X, UILINE_Y + 1);
             printf("당신은 상자를 발견했습니다...");
             gotoxy(UILINE_X, UILINE_Y + 2);
             printf("상자 안에서 [무뎌진 검]을 획득하였습니다...[ctrl]");
-        }
 
-        if (isKeyDown(VK_CONTROL))
-        {
-            stop_move = 0;
-            flag3 = 1;
-            system("cls");
+            if (isKeyDown(VK_CONTROL))
+            {
+                stop_move = 0;
+                flag3 = 1;
+                system("cls");
+                Sleep(30);
+            }
         }
-        break;
     }
 }
 
-void battle_control()
+void enemy_attack(monster* monster)
 {
 
 }
 
-void battle_monster(int key)
+void battle_control(monster* monster) // 반복되는 함수 안에 있는 함수
 {
-    monster slime = { 4,0,1,0 };
+    gotoxy(42, 5);
+    printf("[HP: %d]", monster->hp);
 
+    if (select_turn)
+    {
+        gotoxy(5, UILINE_Y + default_choose);
+        printf("◀");
+    }
+
+    if (isKeyDown(VK_CONTROL) && select_turn == 1) // 선택창에서 컨트롤키를 눌렀을떄
+    {
+        select_turn = 0;
+
+        switch (default_choose)
+        {
+        case 1: // 공격
+            monster->hp = monster->hp - (caracter.atk - monster->df);
+            system("cls");
+            Sleep(30);
+
+            gotoxy(UILINE_X, UILINE_Y + 1);
+            printf("[슬라임]에게 %d 만큼의 피해를 주었다![ctrl]", caracter.atk - monster->df);
+            break;
+        }
+    }
+
+    else if (isKeyDown(VK_CONTROL) && select_turn == 0) // 선택창이 아닐때 컨트롤키를 눌렀다면
+    {
+        select_turn = 1;
+        system("cls");
+    }
+
+    if (isKeyDown(VK_DOWN) && default_choose < 4)
+    {
+        default_choose++;
+        Sleep(30);
+    }
+
+    else if (isKeyDown(VK_UP) && default_choose > 1)
+    {
+        default_choose--;
+        Sleep(30);
+    }
+}
+
+void battle_monster(int key) // 반복되는 함수 안에 있는 함수
+{
     switch (key)
     {
     case 1:
@@ -315,6 +406,7 @@ void battle_monster(int key)
                 stop_move = 0;
                 flag4 = 1;
                 system("cls");
+                Sleep(30);
             }
         }
 
@@ -322,49 +414,78 @@ void battle_monster(int key)
         {
             stop_move = 1;
 
-            gotoxy(UILINE_X, UILINE_Y + 1);
-            printf("[공격]");
+            if (select_turn == 1) // 선택창 변수가 True일때
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("[공격]");
 
+                gotoxy(UILINE_X, UILINE_Y + 2);
+                printf("[스킬]");
+
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("[방어]");
+
+                gotoxy(UILINE_X, UILINE_Y + 4);
+                printf("[아이템]");
+            }
+            battle_control(&slime);
+        }
+
+        if (slime.hp <= 0)
+        {
+            node[4][5].is_monster = 0;
             gotoxy(UILINE_X, UILINE_Y + 2);
-            printf("[스킬]");
-
-            gotoxy(UILINE_X, UILINE_Y + 3);
-            printf("[방어]");
-
-            gotoxy(UILINE_X, UILINE_Y + 4);
-            printf("[아이템]");
+            printf("슬라임을 물리쳤다!");
         }
 
         break;
     }
 }
 
+void event_manage(int key) // 반복되는 함수
+{
+
+}
+
 void stage1() // 반복되는 함수
 {
     map_node_init();
 
-    node[0][5].is_wall = 0;
+    if (stage1_flag == 0)
+    {
+        node[0][5].is_wall = 0;
 
-    node[1][5].is_wall = 0;
+        node[1][5].is_wall = 0;
 
-    node[2][5].is_wall = 0;
-    node[2][5].is_item = 1;
+        node[2][5].is_wall = 0;
+        node[2][5].is_item = 1;
 
-    node[3][5].is_wall = 0;
+        node[3][5].is_wall = 0;
 
-    node[4][5].is_wall = 0;
-    node[4][5].is_monster = 1;
+        node[4][5].is_wall = 0;
+        node[4][5].is_monster = 1;
+
+        node[5][5].is_wall = 0;
+        node[5][5].is_event = 1;
+
+        stage1_flag = 1;
+    }
 
     print_text_ui(1); // <- 반복됨
 
-    if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_item == 1)
+    if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_item == 1) // 내가 방문한 노드가 아이템을 드롭하는 노드인지 검사하는 함수
     {
         drop_item(1);
     }
 
-    if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_monster == 1)
+    if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_monster == 1) // 내가 방문한 노드가 몬스터와 싸우는 노드인지 검사하는 함수
     {
         battle_monster(1);
+    }
+
+    if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_event == 1)
+    {
+        event_manage(1);
     }
 
     Move_caracter();
