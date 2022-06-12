@@ -1,4 +1,6 @@
-﻿#include <stdio.h>
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <string.h>
 #include <string.h>
 #include "heder.h"
 
@@ -25,6 +27,7 @@ typedef struct Map_node {
 }Map_node;
 
 typedef struct Monster {
+    char name[8];
     int hp;
     int df;
     int atk;
@@ -46,14 +49,19 @@ int flag = 0;
 int flag2 = 0;
 int flag3 = 0;
 int flag4 = 0;
+int flag5 = 0;
+int color_flag = 0;
 int stage1_flag = 0;
 int select_turn = 1;
 int test = 0;
 int cc = 0;
 int stage_num = 1;
 int default_choose = 1;
+int my_turn = 1;
+int running = 1;
+char messege[40] = { '\0' };
 
-monster slime = { 4,0,1,0 }; // 이거 반복되면 안됨
+monster slime = { "슬라임",4,0,1,0 }; // 이거 반복되면 안됨
 
 Caracter caracter = { "BoiB", 5, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y };
 struct Map_node node[SIZE][SIZE]; // 전역변수
@@ -151,11 +159,42 @@ void print_battle_ui(int key)
         gotoxy(41, 11);
         printf("│                │");
         gotoxy(41, 12);
-        printf("│                │");
+        printf("│      _____     │");
         gotoxy(41, 13);
-        printf("│                │");
+        printf("│    _________   │");
         gotoxy(41, 14);
-        printf("│                │");
+        printf("│  _____________ │");
+        gotoxy(40, 15);
+        printf("／／               ＼＼");
+        gotoxy(39, 16);
+        printf("／／                   ＼＼");
+        gotoxy(38, 17);
+        printf("／／                       ＼＼");
+        gotoxy(37, 18);
+        printf("／／                           ＼＼");
+        gotoxy(36, 19);
+        printf("／／                               ＼＼");
+        gotoxy(35, 20);
+        printf("／／                                   ＼＼");
+        gotoxy(34, 21);
+        printf("／／                                       ＼＼");
+        gotoxy(33, 22);
+        printf("／／                                           ＼＼");
+        break;
+
+    case 11: // 상자
+        gotoxy(42, 8);
+        printf("┌──────────┐");
+        gotoxy(42, 9);
+        printf("│          │");
+        gotoxy(42, 10);
+        printf("│          │");
+        gotoxy(42, 11);
+        printf("│─────ㅁ───│");
+        gotoxy(42, 12);
+        printf("│          │");
+        gotoxy(42, 13);
+        printf("└──────────┘");
         gotoxy(40, 15);
         printf("／／               ＼＼");
         gotoxy(39, 16);
@@ -179,7 +218,7 @@ void print_battle_ui(int key)
 void print_map_ui()
 // 반복되는 함수
 {
-    gotoxy(0, 0);
+    gotoxy(0, 1);
     printf("[HP]: %d", caracter.hp);
     gotoxy(UILINE_X, UILINE_Y);
     printf("========================================================================================================================");
@@ -319,6 +358,7 @@ void drop_item(int key)
         
         while (flag3 == 0)
         {
+            print_battle_ui(11);
             stop_move = 1;
             gotoxy(UILINE_X, UILINE_Y + 1);
             printf("당신은 상자를 발견했습니다...");
@@ -333,58 +373,94 @@ void drop_item(int key)
                 Sleep(30);
             }
         }
+        break;
     }
-}
-
-void enemy_attack(monster* monster)
-{
-
 }
 
 void battle_control(monster* monster) // 반복되는 함수 안에 있는 함수
 {
+    char temp[50] = { '\0' };
+    char temp2[20] = { '\0' };
+
+
     gotoxy(42, 5);
     printf("[HP: %d]", monster->hp);
 
-    if (select_turn)
+    if (my_turn == 1) // 나의 턴일때
     {
-        gotoxy(5, UILINE_Y + default_choose);
-        printf("◀");
-    }
-
-    if (isKeyDown(VK_CONTROL) && select_turn == 1) // 선택창에서 컨트롤키를 눌렀을떄
-    {
-        select_turn = 0;
-
-        switch (default_choose)
+        if (select_turn)
         {
-        case 1: // 공격
-            monster->hp = monster->hp - (caracter.atk - monster->df);
-            system("cls");
-            Sleep(30);
+            gotoxy(5, UILINE_Y + default_choose);
+            printf("◀");
+        }
 
-            gotoxy(UILINE_X, UILINE_Y + 1);
-            printf("[슬라임]에게 %d 만큼의 피해를 주었다![ctrl]", caracter.atk - monster->df);
-            break;
+        if (isKeyDown(VK_CONTROL) && select_turn == 1) // 선택창에서 컨트롤키를 눌렀을떄
+        {
+            select_turn = 0;
+
+            switch (default_choose)
+            {
+            case 1: // 공격
+                monster->hp = monster->hp - (caracter.atk - monster->df);
+                system("cls");
+                Sleep(30);
+                
+                strcpy(temp, monster->name); // 적 이름
+                strcat(temp, "에게 ");
+
+                _itoa((caracter.atk - monster->df), temp2, 10);
+                strcat(temp2, "의 피해를 주었다.");
+
+                strcat(temp, temp2);
+
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("%s", temp);
+                break;
+            }
+        }
+
+        else if ((isKeyDown(VK_CONTROL) && select_turn == 0)) // 선택창이 아닐때 컨트롤키를 눌렀다면
+        {
+            my_turn = 0;
+            system("cls");
+        }
+
+        if (isKeyDown(VK_DOWN) && default_choose < 4)
+        {
+            default_choose++;
+            Sleep(30);
+        }
+
+        else if (isKeyDown(VK_UP) && default_choose > 1)
+        {
+            default_choose--;
+            Sleep(30);
         }
     }
 
-    else if (isKeyDown(VK_CONTROL) && select_turn == 0) // 선택창이 아닐때 컨트롤키를 눌렀다면
+    else if (my_turn == 0) // 적의 턴일때
     {
-        select_turn = 1;
-        system("cls");
-    }
+        char temp3[20] = { '\0' };
 
-    if (isKeyDown(VK_DOWN) && default_choose < 4)
-    {
-        default_choose++;
-        Sleep(30);
-    }
 
-    else if (isKeyDown(VK_UP) && default_choose > 1)
-    {
-        default_choose--;
-        Sleep(30);
+        strcpy(messege, monster->name);
+        strcat(messege, "의 공격! 피해를 ");
+
+        _itoa((monster->atk - caracter.df), temp3, 10);
+
+        strcat(messege, temp3);
+        strcat(messege, "받았다.");
+
+        gotoxy(UILINE_X, UILINE_Y + 1);
+        printf("%s", messege);
+        
+        if (isKeyDown(VK_CONTROL) && select_turn == 0) // 선택창이 아닐때 컨트롤키를 눌렀다면 , 내턴이 아니라면
+        {
+            my_turn = 1;
+            select_turn = 1;
+            caracter.hp -= monster->atk - caracter.df;
+            system("cls");
+        }
     }
 }
 
@@ -401,9 +477,21 @@ void battle_monster(int key) // 반복되는 함수 안에 있는 함수
             gotoxy(UILINE_X, UILINE_Y + 1);
             printf("[슬라임]이 당신을 공격해왔다!!...[ctrl]");
 
+            if (color_flag == 0)
+            {
+                system("COLOR f0");
+                Sleep(30);
+                system("COLOR 0f");
+                Sleep(30);
+                system("COLOR f0");
+                Sleep(30);
+                system("COLOR 0f");
+                color_flag = 1;
+            }
+
             if (isKeyDown(VK_CONTROL))
             {
-                stop_move = 0;
+                system("COLOR 0f");
                 flag4 = 1;
                 system("cls");
                 Sleep(30);
@@ -414,7 +502,7 @@ void battle_monster(int key) // 반복되는 함수 안에 있는 함수
         {
             stop_move = 1;
 
-            if (select_turn == 1) // 선택창 변수가 True일때
+            if (select_turn == 1 && my_turn == 1) // 선택창 변수가 True일때, 내턴일때
             {
                 gotoxy(UILINE_X, UILINE_Y + 1);
                 printf("[공격]");
@@ -442,9 +530,89 @@ void battle_monster(int key) // 반복되는 함수 안에 있는 함수
     }
 }
 
+void event_control(int key)
+{
+    if (select_turn == 1)
+    {
+        gotoxy(10, UILINE_Y + default_choose);
+        printf("◀");
+    }
+
+    switch (key)
+    {
+    case 1:
+        if (isKeyDown(VK_CONTROL) && select_turn == 1)
+        {
+            switch (default_choose)
+            {
+            case 1:
+                system("cls");
+                Sleep(30);
+
+                select_turn = 0;
+
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("던전 클리어!");
+                break;
+
+            case 2:
+                select_turn = 0;
+                stop_move = 0;
+                default_choose = 1;
+                select_turn = 1;
+                break;
+            }
+        }
+
+        if (isKeyDown(VK_DOWN) && default_choose < 2)
+        {
+            default_choose++;
+            Sleep(30);
+        }
+
+        else if (isKeyDown(VK_UP) && default_choose > 1)
+        {
+            default_choose--;
+            Sleep(30);
+        }
+    }
+}
+
 void event_manage(int key) // 반복되는 함수
 {
+    switch (key)
+    {
+    case 1:
+        print_battle_ui(10);
 
+        while (flag5 == 0)
+        {
+            stop_move = 1;
+            gotoxy(UILINE_X, UILINE_Y + 1);
+            printf("당신은 출구를 발견하였습니다.");
+
+            if (isKeyDown(VK_CONTROL))
+            {
+                flag5 = 1;
+                system("cls");
+                Sleep(30);
+            }
+
+            default_choose = 1;
+            select_turn = 1;
+        }
+
+        if (select_turn == 1)
+        {
+            gotoxy(UILINE_X, UILINE_Y + 1);
+            printf("[탈출한다]");
+
+            gotoxy(UILINE_X, UILINE_Y + 2);
+            printf("[탈출하지 않는다]");
+        }
+
+        event_control(key);
+    }
 }
 
 void stage1() // 반복되는 함수
