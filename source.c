@@ -7,12 +7,16 @@
 // 캐릭터 스테이터스
 typedef struct Caracter {
     char name[8];
+    char job[8];
+    int lv;
     int hp;
+    int mp;
     int df;
     int atk;
     int ct;
     int x;
     int y;
+    int exp;
 }Caracter;
 
 // 맵 노드
@@ -44,7 +48,9 @@ typedef struct Monster {
 #define REAL_ADD_X 10 // 캐릭터의 실제 위치는 10,10이기에 배열의 위치와 노드 좌표값을 동일하게 만들어주는 반복문을 실행할 때 이를 고려하기 위한 변수
 #define REAL_ADD_Y 5
 
+int skill_damage = 1;
 int stop_move = 0;
+int is_deffence = 0;
 int flag = 0;
 int flag2 = 0;
 int flag3 = 0;
@@ -61,13 +67,26 @@ int my_turn = 1;
 int running = 1;
 char messege[40] = { '\0' };
 
-monster slime = { "슬라임",4,0,1,0 }; // 이거 반복되면 안됨
+monster slime = { "슬라임",4,0,1,0 }; // 이름, hp, df, atk, ct
 
-Caracter caracter = { "BoiB", 5, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y };
+Caracter caracter = { "BoiB", "기본", 1, 5, 3, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y , 0}; // 이름, 직업, 레벨, hp, mp, df, atk, ct, x, y, exp
 struct Map_node node[SIZE][SIZE]; // 전역변수
 
 //system("cls")가 필요할 떄는 캐릭터가 행동할 때, 캐릭터의 스테이터스가 변동될 때, 몬스터가 행동할 때, 몬스터의 스테이터스가 변동될 떄, 맵 이동할 떄
 // 전직할 때
+
+void exp_checking()
+{
+    if (caracter.exp >= 5 && caracter.exp < 15)
+    {
+        caracter.lv = 2;
+        // 기본 hp 5 / mp 3 / df 0 / atk 1
+        caracter.hp = 6;
+        caracter.mp = 4;
+        caracter.df = 1;
+        caracter.atk = 2;
+    }
+}
 
 void print_text_ui(int key) // 반복되는 함수
 {
@@ -218,8 +237,16 @@ void print_battle_ui(int key)
 void print_map_ui()
 // 반복되는 함수
 {
+    gotoxy(0, 0);
+    printf("[STAGE]: %d", stage_num);
     gotoxy(0, 1);
     printf("[HP]: %d", caracter.hp);
+    gotoxy(0, 2);
+    printf("[MP]: %d", caracter.mp);
+    gotoxy(0, 3);
+    printf("[LV]: %d", caracter.lv);
+
+
     gotoxy(UILINE_X, UILINE_Y);
     printf("========================================================================================================================");
 
@@ -382,7 +409,6 @@ void battle_control(monster* monster) // 반복되는 함수 안에 있는 함�
     char temp[50] = { '\0' };
     char temp2[20] = { '\0' };
 
-
     gotoxy(42, 5);
     printf("[HP: %d]", monster->hp);
 
@@ -416,10 +442,47 @@ void battle_control(monster* monster) // 반복되는 함수 안에 있는 함�
                 gotoxy(UILINE_X, UILINE_Y + 1);
                 printf("%s", temp);
                 break;
+
+            case 2: //스킬
+                if ((strstr(caracter.job, "기본")) != NULL)
+                {
+                    if (caracter.mp > 0) // mp가 0 이상이어야함
+                    {
+                        monster->hp = monster->hp - (caracter.atk + skill_damage - monster->df);
+                        caracter.mp -= 1;
+                        system("cls");
+                        Sleep(30);
+
+                        strcpy(temp, monster->name); // 적 이름
+                        strcat(temp, "에게 ");
+
+                        _itoa((caracter.atk + skill_damage - monster->df), temp2, 10);
+                        strcat(temp2, "의 피해를 주었다.");
+
+                        strcat(temp, temp2);
+
+                        gotoxy(UILINE_X, UILINE_Y + 1);
+                        printf("%s", temp);
+                    }
+                }
+                break;
+
+
+            case 3: // 방어
+                system("cls");
+                Sleep(30);
+
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("적의 공격에 대비해 방어의 자세를 취한다!");
+
+                caracter.df += caracter.lv;
+                is_deffence = 1;
+
+                break;
             }
         }
 
-        else if ((isKeyDown(VK_CONTROL) && select_turn == 0)) // 선택창이 아닐때 컨트롤키를 눌렀다면
+        else if ((isKeyDown(VK_CONTROL) && select_turn == 0)) // 선택창이 아닐때 컨트롤키를 눌렀다면 (~를 공격했다 or 방어했다 등..)
         {
             my_turn = 0;
             system("cls");
@@ -442,7 +505,6 @@ void battle_control(monster* monster) // 반복되는 함수 안에 있는 함�
     {
         char temp3[20] = { '\0' };
 
-
         strcpy(messege, monster->name);
         strcat(messege, "의 공격! 피해를 ");
 
@@ -459,6 +521,12 @@ void battle_control(monster* monster) // 반복되는 함수 안에 있는 함�
             my_turn = 1;
             select_turn = 1;
             caracter.hp -= monster->atk - caracter.df;
+
+            if (caracter.df > 0 && is_deffence == 1)
+            {
+                caracter.df -= caracter.lv;
+                is_deffence = 0;
+            }
             system("cls");
         }
     }
@@ -524,6 +592,7 @@ void battle_monster(int key) // 반복되는 함수 안에 있는 함수
             node[4][5].is_monster = 0;
             gotoxy(UILINE_X, UILINE_Y + 2);
             printf("슬라임을 물리쳤다!");
+            caracter.exp += 5;
         }
 
         break;
@@ -670,7 +739,16 @@ void Dungeon()
         {
             stage1();
         }
+        exp_checking();
         print_map_ui();
+    }
+
+    if (caracter.hp <= 0)
+    {
+        system("cls");
+        gotoxy(0, 0);
+        printf("게임오버");
+        system("pause");
     }
 }
 
