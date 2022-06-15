@@ -17,6 +17,7 @@ typedef struct Caracter {
     char job[8];
     int lv;
     int hp;
+    int max_hp;
     int mp;
     int df;
     int atk;
@@ -46,19 +47,36 @@ typedef struct Monster {
     int ct;
 }monster;
 
+typedef struct itemStruct { ///아이템 구조체
+    double hpIncrement;
+    double damageIncrement;
+    double armorIncrement;
+    double criPerIncrement;
+    char itemName[100];
+    int itemCode;
+} itemStruct;
+
+itemStruct i1 = { 1,0,0,0,"무뎌진 검",0 }; ///아이템 4개 정의 , hp, 데미지, 방어도, 크리컬, 아이템이름, 아이템코드
+itemStruct i2 = { 0,0,1,0,"골판지 갑옷",1 };
+itemStruct i3 = { 0,2,2,0,"백화점 모험 세트",2 };
+itemStruct i4 = { 4,4,0,0,"집행자의 검",3 };
+
 // 상수
 #define DEFAULT_CHARACTER_X 10
 #define DEFAULT_CHARACTER_Y 10
 #define UILINE_X 0
 #define UILINE_Y 23
 #define SIZE 9 // 맵의 최대 크기
+#define MAX_INVEN_SIZE 5
 
 #define REAL_ADD_X 10 // 캐릭터의 실제 위치는 10,10이기에 배열의 위치와 노드 좌표값을 동일하게 만들어주는 반복문을 실행할 때 이를 고려하기 위한 변수
 #define REAL_ADD_Y 5
 
-int skill_damage = 20;
+int skill_damage = 5;
 int stop_move = 0;
 int is_deffence = 0;
+int coin = 0; //임시화폐 변수
+int first_flag = 0;
 
 // init 전용 플래그
 int flag = 0;
@@ -73,6 +91,11 @@ int flag6 = 0;
 int flag7 = 0;
 int flag8 = 0;
 int is_escape = 0;
+
+// 레벨업 플래그
+int level_2_flag= 0;
+int level_3_flag = 0;
+int level_4_flag = 0;
 
 // 아이템 플래그
 int item_flag = 0;
@@ -92,12 +115,16 @@ int color_flag = 0;
 int color_flag2 = 0;
 int color_flag3 = 0;
 
+int is_clear = 0;
 int select_turn = 1;
 int stage_num = 1;
 int default_choose = 1;
 int my_turn = 1;
 int running = 1;
 char messege[40] = { '\0' };
+double increment[4];
+
+int is_stack = 1; ///1이면 인벤토리는 스텍으로 인식
 
 monster slime = { "슬라임",4,0,1,0 }; // 이름, hp, df, atk, ct
 monster mini_army = { "소인족 군단", 8, 2, 2, 0 };
@@ -105,14 +132,144 @@ monster skeleton = { "마왕", 12, 4, 4, 0 };
 
 struct Map_node node[SIZE][SIZE]; // 전역변수
 
-Caracter caracter = { "BoiB", "기본", 1, 5, 3, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y , 0, {" ", " ", " ", " ", " ", " ", " "} }; ///플레이어 스텟 정의. hp, atk, df, crt, pla
+Caracter caracter = { "BoiB", "기본", 1, 5, 5, 3, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y , 0, {" ", " ", " ", " ", " ", " ", " "} }; ///플레이어 스텟 정의. hp, maxhp, atk, df, crt, pla
 
 //system("cls")가 필요할 떄는 캐릭터가 행동할 때, 캐릭터의 스테이터스가 변동될 때, 몬스터가 행동할 때, 몬스터의 스테이터스가 변동될 떄, 맵 이동할 떄
 // 전직할 때
 
+void codeMatching_rear(Caracter* p) { // hp atk df ct
+    if (p->playerInven.invenCode[p->playerInven.rear] == 0) { // 무뎌진 검
+        increment[0] = 0;
+        increment[1] = 1;
+        increment[2] = 0;
+        increment[3] = 0;
+    }
+    else if (p->playerInven.invenCode[p->playerInven.rear] == 1) { // 골판지 갑옷
+        increment[0] = 0;
+        increment[1] = 0;
+        increment[2] = 1;
+        increment[3] = 0;
+    }
+    else if (p->playerInven.invenCode[p->playerInven.rear] == 2) { // 백화점 세트
+        increment[0] = 0;
+        increment[1] = 2;
+        increment[2] = 2;
+        increment[3] = 0;
+    }
+    else if (p->playerInven.invenCode[p->playerInven.rear] == 3) {
+        increment[0] = 4;
+        increment[1] = 4;
+        increment[2] = 0;
+        increment[3] = 0;
+    }
+    //아이템 개수에 따른 분기문 작성
+}
+
+void codeMatching_front(Caracter* p) {
+    if (p->playerInven.invenCode[p->playerInven.front + 1] == 0) {
+        increment[0] = 0;
+        increment[1] = 1;
+        increment[2] = 0;
+        increment[3] = 0;
+    }
+    else if (p->playerInven.invenCode[p->playerInven.front + 1] == 1) {
+        increment[0] = 0;
+        increment[1] = 0;
+        increment[2] = 1;
+        increment[3] = 0;
+    }
+    else if (p->playerInven.invenCode[p->playerInven.front + 1] == 2) {
+        increment[0] = 0;
+        increment[1] = 2;
+        increment[2] = 2;
+        increment[3] = 0;
+    }
+    else if (p->playerInven.invenCode[p->playerInven.front + 1] == 3) {
+        increment[0] = 4;
+        increment[1] = 4;
+        increment[2] = 0;
+        increment[3] = 0;
+    }
+    //아이템 개수에 따른 분기문 작성
+}
+
+void delete_rear(Caracter* p) { ///스텍에서 pop으로 사용
+    if (is_stack != 1) {
+        printf("큐 인벤토리이므로 사용 불가\n");
+        return;
+    }
+    if (is_empty(p)) {
+        printf("인벤토리가 비었습니다.\n");
+        return;
+    }
+    codeMatching_rear(p); ///실행되면 increment가 삭제되는 아이템이 증가시키는 스텟이 되어 해당 수치만큼 플레이어 스텟에서 제거
+    int prev = p->playerInven.rear;
+    p->hp -= increment[0];
+    p->atk -= increment[1];
+    p->df -= increment[2];
+    p->ct -= increment[3];
+    p->playerInven.rear = (p->playerInven.rear - 1 + MAX_INVEN_SIZE) % MAX_INVEN_SIZE;
+    p->playerInven.arr[prev] = "";
+}
+
+void delete_front(Caracter* p) { ///큐에서 dequeue로 사용
+    if (is_stack == 1) {
+        printf("스택 인벤토리이므로 사용 불가\n");
+        return;
+    }
+    if (is_empty(p)) {
+        printf("인벤토리가 비었습니다.\n");
+        return;
+    }
+    codeMatching_front(p);
+    p->hp -= increment[0];
+    p->atk -= increment[1];
+    p->df -= increment[2];
+    p->ct -= increment[3];
+    p->playerInven.front = (p->playerInven.front + 1) % MAX_INVEN_SIZE;
+    p->playerInven.arr[p->playerInven.front] = " ";
+}
+
+int is_empty(Caracter* p) { ///비어있는지
+    return p->playerInven.rear == p->playerInven.front;
+}
+
+void delete_nene(Caracter* p)
+{
+    if (is_full(p)) {
+        if (is_stack == 1)
+        {
+            delete_rear(p);
+        }
+
+        else if (is_stack == 0)
+        {
+            delete_front(p);
+        }
+        return;
+    }
+}
+
+void add_rear(Caracter* p, itemStruct* i) { ///스텍이나 큐에서 push와 enqueue로 사용
+
+    if (p->playerInven.rear == p->playerInven.front != 0) { // 
+        p->playerInven.rear = 0;
+        p->playerInven.front = 0;
+    }
+    p->hp += i->hpIncrement;
+    p->atk += i->damageIncrement;
+    p->df += i->armorIncrement;
+    p->ct += i->criPerIncrement;
+    p->playerInven.rear = (p->playerInven.rear + 1) % MAX_INVEN_SIZE;
+
+    p->playerInven.arr[p->playerInven.rear] = i->itemName;
+
+    p->playerInven.invenCode[p->playerInven.rear] = i->itemCode;
+}
+
 void exp_checking()
 {
-    if (caracter.exp >= 5 && caracter.exp < 15)
+    if ((caracter.exp >= 5 && caracter.exp < 15) && level_2_flag == 0)
     {
         caracter.lv = 2;
         // 기본 hp 5 / mp 3 / df 0 / atk 1
@@ -120,6 +277,36 @@ void exp_checking()
         caracter.mp = 4;
         caracter.df = 1;
         caracter.atk = 2;
+
+        caracter.max_hp = 6;
+        level_2_flag = 1;
+    }
+
+    else if ((caracter.exp >= 15 && caracter.exp < 20) && level_3_flag == 0)
+    {
+        caracter.lv = 3;
+        // 기본 hp 5 / mp 3 / df 0 / atk 1
+        caracter.hp = 7;
+        caracter.mp = 5;
+        caracter.df = 2;
+        caracter.atk = 3;
+
+        caracter.max_hp = 7;
+        level_3_flag = 1;
+    }
+
+    else if ((caracter.exp >= 20 && caracter.exp < 30) && level_4_flag == 0)
+    {
+        caracter.lv = 4;
+        // 기본 hp 5 / mp 3 / df 0 / atk 1
+        caracter.hp = 8;
+        caracter.mp = 6;
+        caracter.df = 3;
+        caracter.atk = 4;
+
+        caracter.max_hp = 8;
+
+        level_4_flag = 1;
     }
 }
 
@@ -282,39 +469,39 @@ void print_battle_ui(int key)
     case 10: // 출구
         gotoxy(41, 6);
         printf("──────────────────");
-        gotoxy(41, 7);
-        printf("    옷->ㅁ  출구");
-        gotoxy(41, 8);
-        printf("──────────────────");
-        gotoxy(41, 9);
-        printf("│                │");
-        gotoxy(41, 10);
-        printf("│                │");
-        gotoxy(41, 11);
-        printf("│                │");
-        gotoxy(41, 12);
-        printf("│      _____     │");
-        gotoxy(41, 13);
-        printf("│    _________   │");
-        gotoxy(41, 14);
-        printf("│  _____________ │");
-        gotoxy(40, 15);
-        printf("／／               ＼＼");
-        gotoxy(39, 16);
-        printf("／／                   ＼＼");
-        gotoxy(38, 17);
-        printf("／／                       ＼＼");
-        gotoxy(37, 18);
-        printf("／／                           ＼＼");
-        gotoxy(36, 19);
-        printf("／／                               ＼＼");
-        gotoxy(35, 20);
-        printf("／／                                   ＼＼");
-        gotoxy(34, 21);
-        printf("／／                                       ＼＼");
-        gotoxy(33, 22);
-        printf("／／                                           ＼＼");
-        break;
+gotoxy(41, 7);
+printf("    옷->ㅁ  출구");
+gotoxy(41, 8);
+printf("──────────────────");
+gotoxy(41, 9);
+printf("│                │");
+gotoxy(41, 10);
+printf("│                │");
+gotoxy(41, 11);
+printf("│                │");
+gotoxy(41, 12);
+printf("│      _____     │");
+gotoxy(41, 13);
+printf("│    _________   │");
+gotoxy(41, 14);
+printf("│  _____________ │");
+gotoxy(40, 15);
+printf("／／               ＼＼");
+gotoxy(39, 16);
+printf("／／                   ＼＼");
+gotoxy(38, 17);
+printf("／／                       ＼＼");
+gotoxy(37, 18);
+printf("／／                           ＼＼");
+gotoxy(36, 19);
+printf("／／                               ＼＼");
+gotoxy(35, 20);
+printf("／／                                   ＼＼");
+gotoxy(34, 21);
+printf("／／                                       ＼＼");
+gotoxy(33, 22);
+printf("／／                                           ＼＼");
+break;
 
     case 11: // 상자
         gotoxy(42, 8);
@@ -376,6 +563,10 @@ void print_map_ui()
 
     print_battle_ui(0); // <- 반복됨
 
+}
+
+int is_full(Caracter* p) { //차있는지
+    return (p->playerInven.rear + 1) % MAX_INVEN_SIZE == p->playerInven.front;
 }
 
 void Move_caracter() //플레이어의 움직임을 담당하는 함수
@@ -478,6 +669,11 @@ void map_node_init()
             flag7 = 0;
             flag8 = 0;
 
+            item_flag = 0;
+            item_flag2 = 0;
+            item_flag3 = 0;
+            item_flag4 = 0;
+
             select_turn = 1;
             default_choose = 1;
             my_turn = 1;
@@ -497,6 +693,8 @@ void map_node_init()
 
             slime.hp = 4;
             mini_army.hp = 8;
+
+            caracter.hp = caracter.max_hp;
         }
         flagg = 1;
     }
@@ -528,6 +726,11 @@ void map_node_init()
             flag7 = 0;
             flag8 = 0;
 
+            item_flag = 0;
+            item_flag2 = 0;
+            item_flag3 = 0;
+            item_flag4 = 0;
+
             select_turn = 1;
             default_choose = 1;
             my_turn = 1;
@@ -547,6 +750,8 @@ void map_node_init()
 
             slime.hp = 4;
             mini_army.hp = 8;
+
+            caracter.hp = caracter.max_hp;
 
         }
         flaggg = 1;
@@ -601,21 +806,217 @@ void drop_item(int key)
 {
     switch (key)
     {
-    case 1:
+    case 1: // 무뎌진 검
 
         while (item_flag == 0)
         {
             print_battle_ui(11);
             stop_move = 1;
-            gotoxy(UILINE_X, UILINE_Y + 1);
-            printf("당신은 상자를 발견했습니다...");
-            gotoxy(UILINE_X, UILINE_Y + 2);
-            printf("상자 안에서 [무뎌진 검]을 획득하였습니다...[ctrl]");
+
+            if (is_full(&caracter))
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("인벤토리가 가득 찼습니다.");
+
+                if (is_stack == 1) // 스택이면
+                {
+                    gotoxy(UILINE_X, UILINE_Y + 2);
+                    printf("%s(이)가 사라집니다.", caracter.playerInven.arr[caracter.playerInven.rear]);
+                }
+
+                else if (is_stack == 0) // 큐면
+                {
+                    gotoxy(UILINE_X, UILINE_Y + 2);
+                    printf("%s(이)가 사라집니다.", caracter.playerInven.arr[(caracter.playerInven.front + 1) % MAX_INVEN_SIZE]);
+                }
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("상자 안에서 [무뎌진 검]을 획득하였습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 4);
+                printf("공격력 1 증가...[ctrl]");
+            }
+
+            else
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("당신은 상자를 발견했습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 2);
+                printf("상자 안에서 [무뎌진 검]을 획득하였습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("공격력 1 증가...[ctrl]");
+            }
 
             if (isKeyDown(VK_CONTROL))
             {
                 stop_move = 0;
                 item_flag = 1;
+                if (is_full(&caracter))
+                {
+                    delete_nene(&caracter);
+                }
+                add_rear(&caracter, &i1);
+                system("cls");
+                Sleep(30);
+            }
+        }
+        break;
+
+    case 2: // 골판지 갑옷
+
+        while (item_flag2 == 0)
+        {
+            print_battle_ui(11);
+            stop_move = 1;
+
+            if (is_full(&caracter))
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("인벤토리가 가득 찼습니다.");
+
+                if (is_stack == 1) // 스택이면
+                {
+                    gotoxy(UILINE_X, UILINE_Y + 2);
+                    printf("%s(이)가 사라집니다.", caracter.playerInven.arr[caracter.playerInven.rear]);
+                }
+
+                else if (is_stack == 0) // 큐면
+                {
+                    gotoxy(UILINE_X, UILINE_Y + 2);
+                    printf("%s(이)가 사라집니다.", caracter.playerInven.arr[(caracter.playerInven.front + 1) % MAX_INVEN_SIZE]);
+                }
+
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("상자 안에서 [골판지 갑옷]을 획득하였습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 4);
+                printf("방어력 1 증가...[ctrl]");
+            }
+
+            else
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("당신은 상자를 발견했습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 2);
+                printf("상자 안에서 [골판지 갑옷]을 획득하였습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("방어력 1 증가...[ctrl]");
+            }
+
+            if (isKeyDown(VK_CONTROL))
+            {
+                stop_move = 0;
+                item_flag2 = 1;
+                if (is_full(&caracter))
+                {
+                    delete_nene(&caracter);
+                }
+                add_rear(&caracter, &i2);
+                system("cls");
+                Sleep(30);
+            }
+        }
+        break;
+
+    case 3: // 백화점 모험 세트
+
+        while (item_flag3 == 0)
+        {
+            print_battle_ui(11);
+            stop_move = 1;
+
+            if (is_full(&caracter))
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("인벤토리가 가득 찼습니다.");
+
+                if (is_stack == 1) // 스택이면
+                {
+                    gotoxy(UILINE_X, UILINE_Y + 2);
+                    printf("%s(이)가 사라집니다.", caracter.playerInven.arr[caracter.playerInven.rear]);
+                }
+
+                else if (is_stack == 0) // 큐면
+                {
+                    gotoxy(UILINE_X, UILINE_Y + 2);
+                    printf("%s(이)가 사라집니다.", caracter.playerInven.arr[(caracter.playerInven.front + 1) % MAX_INVEN_SIZE]);
+                }
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("상자 안에서 [백화점 모험 세트]을 획득하였습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 4);
+                printf("공격력 2 / 방어력 2 증가...[ctrl]");
+            }
+
+            else
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("당신은 상자를 발견했습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 2);
+                printf("상자 안에서 [백화점 모험 세트]을 획득하였습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("공격력 2 / 방어력 2 증가...[ctrl]");
+            }
+
+            if (isKeyDown(VK_CONTROL))
+            {
+                stop_move = 0;
+                item_flag3 = 1;
+                if (is_full(&caracter))
+                {
+                    delete_nene(&caracter);
+                }
+                add_rear(&caracter, &i3);
+                system("cls");
+                Sleep(30);
+            }
+        }
+        break;
+
+    case 4: // 집행자의 검
+
+        while (item_flag4 == 0)
+        {
+            print_battle_ui(11);
+            stop_move = 1;
+
+            if (is_full(&caracter))
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("인벤토리가 가득 찼습니다.");
+
+                if (is_stack == 1) // 스택이면
+                {
+                    gotoxy(UILINE_X, UILINE_Y + 2);
+                    printf("%s(이)가 사라집니다.", caracter.playerInven.arr[caracter.playerInven.rear]);
+                }
+
+                else if (is_stack == 0) // 큐면
+                {
+                    gotoxy(UILINE_X, UILINE_Y + 2);
+                    printf("%s(이)가 사라집니다.", caracter.playerInven.arr[(caracter.playerInven.front + 1) % MAX_INVEN_SIZE]);
+                }
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("상자 안에서 [집행자의 검]을 획득하였습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 4);
+                printf("공격력 4 / 체력 4 증가...[ctrl]");
+            }
+
+            else
+            {
+                gotoxy(UILINE_X, UILINE_Y + 1);
+                printf("당신은 상자를 발견했습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 2);
+                printf("상자 안에서 [집행자의 검]을 획득하였습니다...");
+                gotoxy(UILINE_X, UILINE_Y + 3);
+                printf("공격력 4 / 체력 4 증가...[ctrl]");
+            }
+
+            if (isKeyDown(VK_CONTROL))
+            {
+                stop_move = 0;
+                item_flag4 = 1;
+                if (is_full(&caracter))
+                {
+                    delete_nene(&caracter);
+                }
+                add_rear(&caracter, &i4);
                 system("cls");
                 Sleep(30);
             }
@@ -728,7 +1129,15 @@ void battle_control(monster* monster) // 반복되는 함수 안에 있는 함수
         strcpy(messege, monster->name);
         strcat(messege, "의 공격! 피해를 ");
 
-        _itoa((monster->atk - caracter.df), temp3, 10);
+        if (caracter.df >= monster->atk)
+        {
+            _itoa(0, temp3, 10);
+        }
+
+        else
+        {
+            _itoa((monster->atk - caracter.df), temp3, 10);
+        }
 
         strcat(messege, temp3);
         strcat(messege, "받았다.");
@@ -740,7 +1149,16 @@ void battle_control(monster* monster) // 반복되는 함수 안에 있는 함수
         {
             my_turn = 1;
             select_turn = 1;
-            caracter.hp -= monster->atk - caracter.df;
+
+            if (caracter.df >= monster->atk)
+            {
+                caracter.hp - 0;
+            }
+
+            else
+            {
+                caracter.hp -= monster->atk - caracter.df;
+            }
 
             if (caracter.df > 0 && is_deffence == 1)
             {
@@ -964,6 +1382,8 @@ void event_control(int key)
 
                 gotoxy(UILINE_X, UILINE_Y + 1);
                 printf("던전 클리어!");
+                gotoxy(UILINE_X, UILINE_Y + 2);
+                printf("보상으로 100G를 얻었다!");
                 is_escape = 1;
                 break;
 
@@ -1027,6 +1447,10 @@ void event_manage(int key) // 반복되는 함수
 
         if (isKeyDown(VK_CONTROL) && is_escape == 1)
         {
+            if (stage_num == 3)
+            {
+                is_clear = 1;
+            }
             sceneCounter = 2;
             Sleep(100);
             system("cls");
@@ -1046,9 +1470,10 @@ void stage1() // 반복되는 함수
         node[1][5].is_wall = 0;
 
         node[2][5].is_wall = 0;
-        node[2][5].is_item = 1;
+        node[2][5].is_item = 1; // 무뎌진 검
 
         node[3][5].is_wall = 0;
+        node[3][5].is_item = 1;
 
         node[4][5].is_wall = 0;
         node[4][5].is_monster = 1;
@@ -1063,7 +1488,15 @@ void stage1() // 반복되는 함수
 
     if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_item == 1) // 내가 방문한 노드가 아이템을 드롭하는 노드인지 검사하는 함수
     {
-        drop_item(1);
+        if ((node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].x == 13) && (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].y == 10)) // 15.9 골판지 갑옷
+        {
+            drop_item(2);
+        }
+
+        else if ((node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].x == 12) && (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].y == 10)) // 12,11 무뎌진검
+        {
+            drop_item(1);
+        }
     }
 
     if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_monster == 1) // 내가 방문한 노드가 몬스터와 싸우는 노드인지 검사하는 함수
@@ -1099,10 +1532,10 @@ void stage2()
         node[5][5].is_wall = 0;
 
         node[5][4].is_wall = 0; // 아이템 드랍
-        node[5][4].is_item = 1;
+        node[5][4].is_item = 1; // 골판지 갑옷
 
         node[2][6].is_wall = 0; // 아이템 드랍
-        node[2][6].is_item = 1;
+        node[2][6].is_item = 1; // 무뎌진 검
 
         node[2][7].is_wall = 0;
 
@@ -1114,7 +1547,7 @@ void stage2()
         node[5][7].is_wall = 0;
 
         node[5][8].is_wall = 0; // 아이템 드랍
-        node[5][8].is_item = 1;
+        node[5][8].is_item = 1; // 백화점 세트
 
         node[6][7].is_wall = 0; // 여기에 보스 넣을것.
         node[6][7].is_monster = 1;
@@ -1129,7 +1562,20 @@ void stage2()
 
     if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_item == 1) // 내가 방문한 노드가 아이템을 드롭하는 노드인지 검사하는 함수
     {
-        drop_item(1);
+        if ((node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].x == 15) && (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].y == 9)) // 15.9 골판지 갑옷
+        {
+            drop_item(2);
+        }
+
+        else if ((node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].x == 12) && (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].y == 11)) // 12,11 무뎌진검
+        {
+            drop_item(1);
+        }
+
+        else if ((node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].x == 15) && (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].y == 13)) // 15,13 집행검
+        {
+            drop_item(4);
+        }
     }
 
     if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_monster == 1) // 내가 방문한 노드가 몬스터와 싸우는 노드인지 검사하는 함수
@@ -1182,7 +1628,8 @@ void stage3()
 
         node[4][1].is_wall = 0;
 
-        node[5][1].is_wall = 0;
+        node[5][1].is_wall = 0; // 여기 아이템 놔둘거임
+        node[5][1].is_item = 1;
 
         node[3][5].is_wall = 0;
 
@@ -1202,7 +1649,7 @@ void stage3()
         node[8][2].is_wall = 0;
 
         node[8][1].is_wall = 0; // 여기 아이템 놔둘거임.
-        //node[8][1].is_item = 0;
+        node[8][1].is_item = 1;
 
         node[5][4].is_wall = 0;
 
@@ -1217,7 +1664,7 @@ void stage3()
         node[5][7].is_wall = 0;
 
         node[5][8].is_wall = 0; // 여기 아이템 놔둘거임.
-        //node[5][8].is_item = 1;
+        node[5][8].is_item = 1;
 
         node[6][7].is_wall = 0;
 
@@ -1242,7 +1689,20 @@ void stage3()
 
     if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_item == 1) // 내가 방문한 노드가 아이템을 드롭하는 노드인지 검사하는 함수
     {
-        drop_item(1);
+        if ((node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].x == 15) && (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].y == 6)) // 15.6 무뎌진 검
+        {
+            drop_item(1);
+        }
+
+        else if ((node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].x == 18) && (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].y == 6)) // 18,6 백화점 세트
+        {
+            drop_item(2);
+        }
+
+        else if ((node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].x == 15) && (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].y == 13)) // 15,13 가죽 갑옷
+        {
+            drop_item(1);
+        }
     }
 
     if (node[caracter.x - REAL_ADD_X][caracter.y - REAL_ADD_Y].is_monster == 1) // 내가 방문한 노드가 몬스터와 싸우는 노드인지 검사하는 함수

@@ -7,31 +7,14 @@
 #include <conio.h>
 #include "Dungeon.h"
 
-#define MAX_INVEN_SIZE 7 
-
 int maxScene = 8;
 
 int select_input();
 
 void gotoxy(int x, int y);
 
-typedef struct itemStruct { ///아이템 구조체
-    double hpIncrement;
-    double damageIncrement;
-    double armorIncrement;
-    double criPerIncrement;
-    char itemName[100];
-    int itemCode;
-} itemStruct;
-
-itemStruct i1 = { 1,1,1,1,"아이템1",0 }; ///아이템 4개 정의 , 아이템, 데미지, 방어도, 크리컬, 아이템이름, 아이템코드
-itemStruct i2 = { 2,2,2,2,"아이템2",1 };
-itemStruct i3 = { 3,3,3,3,"아이템3",2 };
-itemStruct i4 = { 4,4,4,4,"아이템4",3 };
-double increment[4];
-
 typedef struct storyScript {
-    char script[100];
+    char script[150];
 }storyScript;
 
 typedef struct iconUI { //각 UI 식별코드 및 방향키 입력 시 이동할 주소 내장
@@ -43,19 +26,18 @@ typedef struct iconUI { //각 UI 식별코드 및 방향키 입력 시 이동할
     struct iconUI* bottomLink;
 }iconUI;
 
-int is_empty(Caracter* p) { ///비어있는지
-    return p->playerInven.rear == p->playerInven.front;
-}
-
-int is_full(Caracter* p) { //차있는지
-    return (p->playerInven.rear + 1) % MAX_INVEN_SIZE == p->playerInven.front;
-}
-
-int is_stack = 1; ///1이면 인벤토리는 스텍으로 인식
 
 void add_front(Caracter* p, itemStruct* i) { ///스텍이나 큐 구조라서 사실상 사용되지 않음
     if (is_full(p)) {
-        printf("인벤토리가 가득 찼습니다.\n");
+        if (is_stack == 1)
+        {
+            delete_rear(p);
+        }
+
+        else if (is_stack == 2)
+        {
+            delete_front(p);
+        }
         return;
     }
     if ((p->playerInven.rear == p->playerInven.front) && (p->playerInven.rear != 0)) {
@@ -71,127 +53,55 @@ void add_front(Caracter* p, itemStruct* i) { ///스텍이나 큐 구조라서 �
     p->playerInven.front = (p->playerInven.front - 1 + MAX_INVEN_SIZE) % MAX_INVEN_SIZE;
 }
 
-void add_rear(Caracter* p, itemStruct* i) { ///스텍이나 큐에서 push와 enqueue로 사용
-    if (is_full(p)) {
-        printf("인벤토리가 가득 찼습니다.\n");
-        return;
-    }
-    if (p->playerInven.rear == p->playerInven.front != 0) {
-        p->playerInven.rear = 0;
-        p->playerInven.front = 0;
-    }
-    p->hp += i->hpIncrement;
-    p->atk += i->damageIncrement;
-    p->df += i->armorIncrement;
-    p->ct += i->criPerIncrement;
-    p->playerInven.rear = (p->playerInven.rear + 1) % MAX_INVEN_SIZE;
-    p->playerInven.arr[p->playerInven.rear] = i->itemName;
-    p->playerInven.invenCode[p->playerInven.rear] = i->itemCode;
-}
-
-void codeMatching_rear(Caracter* p) {
-    if (p->playerInven.invenCode[p->playerInven.rear] == 0) {
-        increment[0] = 1;
-        increment[1] = 1;
-        increment[2] = 1;
-        increment[3] = 1;
-    }
-    else if (p->playerInven.invenCode[p->playerInven.rear] == 1) {
-        increment[0] = 2;
-        increment[1] = 2;
-        increment[2] = 2;
-        increment[3] = 2;
-    }
-    else if (p->playerInven.invenCode[p->playerInven.rear] == 2) {
-        increment[0] = 3;
-        increment[1] = 3;
-        increment[2] = 3;
-        increment[3] = 3;
-    }
-    else if (p->playerInven.invenCode[p->playerInven.rear] == 3) {
-        increment[0] = 4;
-        increment[1] = 4;
-        increment[2] = 4;
-        increment[3] = 4;
-    }
-    //아이템 개수에 따른 분기문 작성
-}
-
-void codeMatching_front(Caracter* p) {
-    if (p->playerInven.invenCode[p->playerInven.front + 1] == 0) {
-        increment[0] = 1;
-        increment[1] = 1;
-        increment[2] = 1;
-        increment[3] = 1;
-    }
-    else if (p->playerInven.invenCode[p->playerInven.front + 1] == 1) {
-        increment[0] = 2;
-        increment[1] = 2;
-        increment[2] = 2;
-        increment[3] = 2;
-    }
-    else if (p->playerInven.invenCode[p->playerInven.front + 1] == 2) {
-        increment[0] = 3;
-        increment[1] = 3;
-        increment[2] = 3;
-        increment[3] = 3;
-    }
-    else if (p->playerInven.invenCode[p->playerInven.front + 1] == 3) {
-        increment[0] = 4;
-        increment[1] = 4;
-        increment[2] = 4;
-        increment[3] = 4;
-    }
-    //아이템 개수에 따른 분기문 작성
-}
-
-void delete_rear(Caracter* p) { ///스텍에서 pop으로 사용
-    if (is_stack != 1) {
-        printf("큐 인벤토리이므로 사용 불가\n");
-        return;
-    }
-    if (is_empty(p)) {
-        printf("인벤토리가 비었습니다.\n");
-        return;
-    }
-    codeMatching_rear(p); ///실행되면 increment가 삭제되는 아이템이 증가시키는 스텟이 되어 해당 수치만큼 플레이어 스텟에서 제거
-    int prev = p->playerInven.rear;
-    p->hp -= increment[0];
-    p->atk -= increment[1];
-    p->df -= increment[2];
-    p->ct -= increment[3];
-    p->playerInven.rear = (p->playerInven.rear - 1 + MAX_INVEN_SIZE) % MAX_INVEN_SIZE;
-    p->playerInven.arr[prev] = "";
-}
-
-void delete_front(Caracter* p) { ///큐에서 dequeue로 사용
-    if (is_stack == 1) {
-        printf("스택 인벤토리이므로 사용 불가\n");
-        return;
-    }
-    if (is_empty(p)) {
-        printf("인벤토리가 비었습니다.\n");
-        return;
-    }
-    codeMatching_front(p);
-    p->hp -= increment[0];
-    p->atk -= increment[1];
-    p->df -= increment[2];
-    p->ct -= increment[3];
-    p->playerInven.front = (p->playerInven.front + 1) % MAX_INVEN_SIZE;
-    p->playerInven.arr[p->playerInven.front] = " ";
-}
-
 void start_scene() //0
 {
     int keyInput = 0;
-
+    int x;
+    int y;
     system("cls");
 
-    gotoxy(10, 3);
-    printf("'그' 게임");
-    gotoxy(14, 8);
-    printf("시작하려면 엔터를-");
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 240);
+    gotoxy(16, 3);
+    printf("                            ");
+    gotoxy(12, 4);
+    printf("  ★『~할짓없는 마왕에 의해          ");
+    gotoxy(14, 5);
+    printf("              나의 인벤토리가              ");
+    gotoxy(20, 6);
+    printf("    자료구조 형태가 된 건에 대하여~』☆  ");
+    gotoxy(25, 7);
+    printf("                                  ");
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+
+    x = 10;
+    y = 12;
+    gotoxy(x, y++);
+    printf("  ■   ｜");
+    gotoxy(x, y++);
+    printf(" /▼＼ ｜");
+    gotoxy(x, y++);
+    printf("/ ｜ ＼┼");
+    gotoxy(x, y++);
+    printf("  ｜   ｜");
+    gotoxy(x, y++);
+    printf("  /＼");
+    gotoxy(x, y++);
+    printf(" ｜ ｜");
+    gotoxy(x, y++);
+    printf(" ｜ ｜");
+    gotoxy(x, y++);
+    printf(" ┘  └");
+
+    gotoxy(24, 13);
+    printf("stack!");
+    gotoxy(34, 9);
+    printf("queue!");
+    gotoxy(44, 11);
+    printf("stack!");
+
+    gotoxy(40, 21);
+    printf("<엔터를 눌러 게임시작...>");
 
     while (1)
     {
@@ -215,11 +125,11 @@ void story_scene() //1
     int storyCounter = 0;
     storyScript script[5];
 
-    strcpy(script[0].script, "첫번쨰 스크립트");
-    strcpy(script[1].script, "두번쨰 스크립트");
-    strcpy(script[2].script, "세번쨰 스크립트");
-    strcpy(script[3].script, "네번쨰 스크립트");
-    strcpy(script[4].script, "다섯번쨰 스크립트");
+    strcpy(script[0].script, "어느날 꿈 속에서 마왕이 나타나 아무 이유도 없이\n                    나에게 저주를 걸었다.");
+    strcpy(script[1].script, "잠에서 깨어나 몸을 확인해봤지만 다행히 변한 것은 없었다.");
+    strcpy(script[2].script, "그러나 인벤토리를 연 순간...상당히 괴랄한 저주가 걸려있는 것을\n                    볼 수 있었다.");
+    strcpy(script[3].script, "장비를 스텍, 큐 형태로만 넣을 수 있었고,\n                    인벤토리에서 빠져나가는 순간 장비는 파괴되었다.");
+    strcpy(script[4].script, "이 저주를 풀기 위해선 마왕을 무찔러야 했고,\n                    지금 마왕의 던전으로 가기 위한 마지막 마을에 도착했다.");
 
     while (1)
     {
@@ -227,11 +137,11 @@ void story_scene() //1
 
         gotoxy(10, 3);
         printf("%s", script[storyCounter].script);
-        gotoxy(18, 8);
+        gotoxy(40, 21);
         if (storyCounter == 4)
-            printf("마을로 가기 위해 엔터...");
+            printf("<마을로 가기 위해 엔터...>");
         else
-            printf("계속하기 위해 엔터...");
+            printf("<계속하기 위해 엔터...>");
 
         while (1)
         {
@@ -437,8 +347,6 @@ void village_scene() //2
     sceneCounter = select_input(0, maxScene);
 }
 
-int coin = 500; //임시화폐 변수*********************************************
-
 
 //방향키 누르면 볼드 아이콘 주소 바꾸고 재출력
 //엔터 누르면 해당 아이콘의 기능 실행
@@ -575,7 +483,7 @@ void store_scene(Caracter* p) //3
             gotoxy(anchorX, anchorY); //아이템1
             printf("마시거나 몸에 뿌리면");
             gotoxy(anchorX, anchorY + 1);
-            printf("체력이 회복된다.");
+            printf("체력이 증가한다.");
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 240);
         }
         anchorX = 4; //좌표앵커 초기화
@@ -583,7 +491,7 @@ void store_scene(Caracter* p) //3
         gotoxy(anchorX, anchorY); //아이템1
         printf("┎------------------┒ ");
         gotoxy(anchorX, anchorY + 1);
-        printf("┃     회북물약     ┃ ");
+        printf("┃     체력물약     ┃ ");
         gotoxy(anchorX, anchorY + 2);
         printf("┖------------------┚ ");
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0);
@@ -795,22 +703,22 @@ void store_scene(Caracter* p) //3
                             {
                             case 0:
                             {
-                                p->hp += 50;
+                                p->max_hp += 1;
                                 break;
                             }
                             case 1:
                             {
-                                p->df += 5;
+                                p->df += 1;
                                 break;
                             }
                             case 2:
                             {
-                                p->ct += 5;
+                                p->ct += 1;
                                 break;
                             }
                             case 3:
                             {
-                                p->atk += 5;
+                                p->atk += 1;
                                 break;
                             }
                             default:
@@ -862,12 +770,12 @@ void status_scene(Caracter* p) //4
     {
         system("cls"); //화면 초기화
 
-        printf("체력 : %.2lf\n", p->hp);
-        printf("공격력 : %.2lf\n", p->atk);
-        printf("방어력 : %.2lf\n", p->df);
-        printf("치명타 : %.2lf%%\n", p->ct);
+        printf("체력   : %.2d\n", p->hp);
+        printf("공격력 : %.2d\n", p->atk);
+        printf("방어력 : %.2d\n", p->df);
+        printf("치명타 : %.2d%%\n", p->ct);
 
-        printf("\n 스택 상태 시 %s(이)가 사라집니다.\n", p->playerInven.arr[p->playerInven.rear]);
+        printf("\n스택 상태 시 %s(이)가 사라집니다.\n", p->playerInven.arr[p->playerInven.rear]);
         printf("큐 상태 시 %s(이)가 사라집니다.\n", p->playerInven.arr[(p->playerInven.front + 1) % MAX_INVEN_SIZE]);
         if (is_stack != 1) {
             printf("현재 큐 상태입니다.\n");
@@ -880,9 +788,11 @@ void status_scene(Caracter* p) //4
         anchorY = 11;
         gotoxy(anchorX, anchorY);
         printf("인벤토리 -> ");
-        for (int i = 0; i < 7; i++) {
-            printf("%s ", p->playerInven.arr[i]);
-        }
+
+        printf("%s ", p->playerInven.arr[(p->playerInven.front + 1) % MAX_INVEN_SIZE]);
+        printf("%s ", p->playerInven.arr[(p->playerInven.front + 2) % MAX_INVEN_SIZE]);
+        printf("%s ", p->playerInven.arr[(p->playerInven.front + 3) % MAX_INVEN_SIZE]);
+        printf("%s ", p->playerInven.arr[(p->playerInven.front + 4) % MAX_INVEN_SIZE]);
 
         if (isExit != 1)
         {
@@ -897,14 +807,22 @@ void status_scene(Caracter* p) //4
         {
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 240);
         }
-        anchorX = 38; //좌표앵커 초기화, 나가기
-        anchorY = 15;
+        anchorX = 45; //좌표앵커 초기화, 나가기
+        anchorY = 20;
         gotoxy(anchorX, anchorY); //아이템4
         printf("┎------------------┒ ");
         gotoxy(anchorX, anchorY + 1);
         printf("┃      나가기      ┃ ");
         gotoxy(anchorX, anchorY + 2);
         printf("┖------------------┚ ");
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0);
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+
+        anchorX = 15;
+        anchorY = 21;
+        gotoxy(anchorX, anchorY);
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 240);
+        printf("<스페이스바 눌러 스택 <-> 큐>");
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0);
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 
@@ -959,6 +877,14 @@ void status_scene(Caracter* p) //4
                     }
 
                     return;
+                }
+
+                else if (keyInput == 32)
+                {
+                    if (is_stack == 1)
+                        is_stack = 0;
+                    else
+                        is_stack = 1;
                 }
                 break;
             }
@@ -1109,6 +1035,7 @@ int main()
             {
                 stage_num++;
                 flag8 = 1;
+                coin += 100;
             }
             break;
         }
