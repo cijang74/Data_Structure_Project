@@ -784,8 +784,11 @@ void check_arround_node()
 
         if (node[caracter.x - REAL_ADD_X - 1][caracter.y - REAL_ADD_Y].is_wall == 0) // 왼쪽
         {
-            gotoxy(caracter.x - 1, caracter.y);
-            printf("□");
+            if (!(caracter.x == node[0][5].x + 10 && caracter.y == node[0][6].y + 5))
+            {
+                gotoxy(caracter.x - 1, caracter.y);
+                printf("□");
+            }
         }
 
         if (node[caracter.x - REAL_ADD_X][caracter.y + 1 - REAL_ADD_Y].is_wall == 0) // 윗쪽
@@ -1771,9 +1774,9 @@ void Dungeon()
         system("cls");
         gotoxy(0, 0);
         printf("마왕을 물리쳤지만 인벤토리의 저주는 풀리지 않았다...");
-        otoxy(0, 1);
+        gotoxy(0, 1);
         printf("아마 마왕의 배후에 뭔가가 더있는것 같다...");
-        otoxy(0, 2);
+        gotoxy(0, 2);
         printf("[GAME CLEAR]");
         system("pause");
     }
