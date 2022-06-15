@@ -4,6 +4,13 @@
 #include <string.h>
 #include "heder.h"
 
+typedef struct inventory { ///인벤토리 구조채
+    char* arr[7];  //원형덱이라서 +1
+    int rear;
+    int front;
+    int invenCode[7]; //아이템 삭제 시 능력치를 어떻게 반환해야 할 지에 대한 인덱스
+} inventory;
+
 // 캐릭터 스테이터스
 typedef struct Caracter {
     char name[8];
@@ -17,6 +24,7 @@ typedef struct Caracter {
     int x;
     int y;
     int exp;
+    struct inventory playerInven;
 }Caracter;
 
 // 맵 노드
@@ -59,12 +67,20 @@ int flaggg = 0;
 
 // 이벤트, 대화창, 전투 전용 플래그
 int flag2 = 0;
-int flag3 = 0;
 int flag4 = 0;
 int flag5 = 0;
 int flag6 = 0;
 int flag7 = 0;
+int flag8 = 0;
+int is_escape = 0;
 
+// 아이템 플래그
+int item_flag = 0;
+int item_flag2 = 0;
+int item_flag3 = 0;
+int item_flag4 = 0;
+
+int sceneCounter = 0; //0은 초기 시작 화면
 
 // 맵 노드 설정하는 플래그
 int stage1_flag = 0;
@@ -85,12 +101,11 @@ char messege[40] = { '\0' };
 
 monster slime = { "슬라임",4,0,1,0 }; // 이름, hp, df, atk, ct
 monster mini_army = { "소인족 군단", 8, 2, 2, 0 };
-monster skeleton = { "스켈레톤", 12, 4, 4, 0 };
-
-
-Caracter caracter = { "BoiB", "기본", 1, 5, 3, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y , 0 }; // 이름, 직업, 레벨, hp, mp, df, atk, ct, x, y, exp
+monster skeleton = { "마왕", 12, 4, 4, 0 };
 
 struct Map_node node[SIZE][SIZE]; // 전역변수
+
+Caracter caracter = { "BoiB", "기본", 1, 5, 3, 0, 1, 10, DEFAULT_CHARACTER_X, DEFAULT_CHARACTER_Y , 0, {" ", " ", " ", " ", " ", " ", " "} }; ///플레이어 스텟 정의. hp, atk, df, crt, pla
 
 //system("cls")가 필요할 떄는 캐릭터가 행동할 때, 캐릭터의 스테이터스가 변동될 때, 몬스터가 행동할 때, 몬스터의 스테이터스가 변동될 떄, 맵 이동할 떄
 // 전직할 때
@@ -213,6 +228,8 @@ void print_battle_ui(int key)
         break;
 
     case 3: // 스켈레톤
+        gotoxy(42, 0);
+        printf(" ▲       ▲");
         gotoxy(42, 1);
         printf("┌──────────┐");
         gotoxy(42, 2);
@@ -454,11 +471,12 @@ void map_node_init()
                 }
             }
             flag2 = 0;
-            flag3 = 0;
+            item_flag = 0;
             flag4 = 0;
             flag5 = 0;
             flag6 = 0;
             flag7 = 0;
+            flag8 = 0;
 
             select_turn = 1;
             default_choose = 1;
@@ -471,6 +489,14 @@ void map_node_init()
             stage1_flag = 0;
             stage2_flag = 0;
             stage3_flag = 0;
+
+            is_escape = 0;
+
+            caracter.x = DEFAULT_CHARACTER_X;
+            caracter.y = DEFAULT_CHARACTER_Y;
+
+            slime.hp = 4;
+            mini_army.hp = 8;
         }
         flagg = 1;
     }
@@ -493,14 +519,35 @@ void map_node_init()
                     node[i][j].is_event = 0;
                 }
             }
-            int flag2 = 0;
-            int flag3 = 0;
-            int flag4 = 0;
-            int flag5 = 0;
-            int select_turn = 1;
-            int default_choose = 1;
-            int my_turn = 1;
-            char messege[40] = { '\0' };
+
+            flag2 = 0;
+            item_flag = 0;
+            flag4 = 0;
+            flag5 = 0;
+            flag6 = 0;
+            flag7 = 0;
+            flag8 = 0;
+
+            select_turn = 1;
+            default_choose = 1;
+            my_turn = 1;
+
+            color_flag = 0;
+            color_flag2 = 0;
+            color_flag3 = 0;
+
+            stage1_flag = 0;
+            stage2_flag = 0;
+            stage3_flag = 0;
+
+            is_escape = 0;
+
+            caracter.x = DEFAULT_CHARACTER_X;
+            caracter.y = DEFAULT_CHARACTER_Y;
+
+            slime.hp = 4;
+            mini_army.hp = 8;
+
         }
         flaggg = 1;
     }
@@ -556,7 +603,7 @@ void drop_item(int key)
     {
     case 1:
 
-        while (flag3 == 0)
+        while (item_flag == 0)
         {
             print_battle_ui(11);
             stop_move = 1;
@@ -568,7 +615,7 @@ void drop_item(int key)
             if (isKeyDown(VK_CONTROL))
             {
                 stop_move = 0;
-                flag3 = 1;
+                item_flag = 1;
                 system("cls");
                 Sleep(30);
             }
@@ -824,7 +871,7 @@ void battle_monster(int key) // 반복되는 함수 안에 있는 함수
             node[6][3].is_monster = 0;
             node[6][7].is_monster = 0;
             gotoxy(UILINE_X, UILINE_Y + 2);
-            printf("소인족군단을 물리쳤다!");
+            printf("소인족 군단을 물리쳤다!");
             my_turn = 1;
             select_turn = 1;
             caracter.exp += 10;
@@ -839,7 +886,7 @@ void battle_monster(int key) // 반복되는 함수 안에 있는 함수
         {
             stop_move = 1;
             gotoxy(UILINE_X, UILINE_Y + 1);
-            printf("[스켈레톤]이 당신을 공격해왔다!!...[ctrl]");
+            printf("[마왕]이 당신을 공격해왔다!!...[ctrl]");
 
             if (color_flag3 == 0)
             {
@@ -884,7 +931,7 @@ void battle_monster(int key) // 반복되는 함수 안에 있는 함수
         {
             node[8][5].is_monster = 0;
             gotoxy(UILINE_X, UILINE_Y + 2);
-            printf("스켈레톤을 물리쳤다!");
+            printf("마왕을 물리쳤다!");
             my_turn = 1;
             select_turn = 1;
             caracter.exp += 15;
@@ -917,6 +964,7 @@ void event_control(int key)
 
                 gotoxy(UILINE_X, UILINE_Y + 1);
                 printf("던전 클리어!");
+                is_escape = 1;
                 break;
 
             case 2:
@@ -949,7 +997,7 @@ void event_manage(int key) // 반복되는 함수
     case 1:
         print_battle_ui(10);
 
-        while (flag5 == 0)
+        while (flag5 == 0) // 출구 발견 이벤트
         {
             stop_move = 1;
             gotoxy(UILINE_X, UILINE_Y + 1);
@@ -976,6 +1024,14 @@ void event_manage(int key) // 반복되는 함수
         }
 
         event_control(key);
+
+        if (isKeyDown(VK_CONTROL) && is_escape == 1)
+        {
+            sceneCounter = 2;
+            Sleep(100);
+            system("cls");
+            running = 0;
+        }
     }
 }
 
@@ -1218,21 +1274,22 @@ void stage3()
 
 void Dungeon()
 {
+    system("cls");
     CursorView(0);
 
-    while (caracter.hp > 0)
+    while (caracter.hp > 0 && running == 1)
     {
         if (stage_num == 1)
         {
             stage1();
         }
 
-        if (stage_num == 2)
+        else if (stage_num == 2)
         {
             stage2();
         }
 
-        if (stage_num == 3)
+        else if (stage_num == 3)
         {
             stage3();
         }
@@ -1248,10 +1305,4 @@ void Dungeon()
         printf("게임오버\n");
         system("pause");
     }
-}
-
-int main()
-{
-    Dungeon();
-    return 0;
 }

@@ -1,2 +1,22 @@
-﻿  test.c
+﻿  source.c
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(65,28): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(66,33): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(67,31): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(68,32): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(83,28): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(84,33): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(85,31): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(86,32): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(159,26): warning C4244: '-=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(160,27): warning C4244: '-=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(161,26): warning C4244: '-=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(162,26): warning C4244: '-=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(177,26): warning C4244: '-=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(178,27): warning C4244: '-=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(179,26): warning C4244: '-=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(180,26): warning C4244: '-=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(865,16): warning C4477: 'printf' : 서식 문자열 '%.2lf'에 'double' 형식의 인수가 필요하지만 variadic 인수 1의 형식이 'int'입니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(866,16): warning C4477: 'printf' : 서식 문자열 '%.2lf'에 'double' 형식의 인수가 필요하지만 variadic 인수 1의 형식이 'int'입니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(867,16): warning C4477: 'printf' : 서식 문자열 '%.2lf'에 'double' 형식의 인수가 필요하지만 variadic 인수 1의 형식이 'int'입니다.
+C:\Users\cijan\source\repos\Data_Structure_Project\Data_Structure_Project\source.c(868,16): warning C4477: 'printf' : 서식 문자열 '%.2lf'에 'double' 형식의 인수가 필요하지만 variadic 인수 1의 형식이 'int'입니다.
   Data_Structure_Project.vcxproj -> C:\Users\cijan\source\repos\Data_Structure_Project\Debug\Data_Structure_Project.exe

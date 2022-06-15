@@ -142,11 +142,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source.c" />
-    <ClCompile Include="test.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="heder.h" />
-    <ClInclude Include="Shop_and_inventory.h" />
+    <ClInclude Include="Dungeon.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

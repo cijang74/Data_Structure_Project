@@ -9,7 +9,6 @@
 
 #define MAX_INVEN_SIZE 7 
 
-int sceneCounter = 0; //0은 초기 시작 화면
 int maxScene = 8;
 
 int select_input();
@@ -24,40 +23,37 @@ typedef struct itemStruct { ///아이템 구조체
     char itemName[100];
     int itemCode;
 } itemStruct;
-itemStruct i1 = { 1,1,1,1,"아이템1",0 }; ///아이템 4개 정의
+
+itemStruct i1 = { 1,1,1,1,"아이템1",0 }; ///아이템 4개 정의 , 아이템, 데미지, 방어도, 크리컬, 아이템이름, 아이템코드
 itemStruct i2 = { 2,2,2,2,"아이템2",1 };
 itemStruct i3 = { 3,3,3,3,"아이템3",2 };
 itemStruct i4 = { 4,4,4,4,"아이템4",3 };
 double increment[4];
 
-typedef struct inventory { ///인벤토리 구조채
-    char* arr[7];  //원형덱이라서 +1
-    int rear;
-    int front;
-    int invenCode[7]; //아이템 삭제 시 능력치를 어떻게 반환해야 할 지에 대한 인덱스
-} inventory;
+typedef struct storyScript {
+    char script[100];
+}storyScript;
 
-typedef struct playerStats { ///플레이어 스텟
-    double playerHp;
-    double playerDamage;
-    double playerArmor;
-    double playerCriPer;
-    struct inventory playerInven;
-} playerStats;
+typedef struct iconUI { //각 UI 식별코드 및 방향키 입력 시 이동할 주소 내장
+    int iconCode; //0은 아이템, 1은 선택 UI
+    int itemCode; //아이템이면 종류
+    struct iconUI* leftLink; //상하좌우 주소
+    struct iconUI* rightLink;
+    struct iconUI* topLink;
+    struct iconUI* bottomLink;
+}iconUI;
 
-playerStats p1 = { 100,10,10,0,{" ", " ", " ", " ", " ", " ", " "} }; ///플레이어 스텟 정의. hp, atk, df, crt, pla
-
-int is_empty(playerStats* p) { ///비어있는지
+int is_empty(Caracter* p) { ///비어있는지
     return p->playerInven.rear == p->playerInven.front;
 }
 
-int is_full(playerStats* p) { //차있는지
+int is_full(Caracter* p) { //차있는지
     return (p->playerInven.rear + 1) % MAX_INVEN_SIZE == p->playerInven.front;
 }
 
 int is_stack = 1; ///1이면 인벤토리는 스텍으로 인식
 
-void add_front(playerStats* p, itemStruct* i) { ///스텍이나 큐 구조라서 사실상 사용되지 않음
+void add_front(Caracter* p, itemStruct* i) { ///스텍이나 큐 구조라서 사실상 사용되지 않음
     if (is_full(p)) {
         printf("인벤토리가 가득 찼습니다.\n");
         return;
@@ -66,16 +62,16 @@ void add_front(playerStats* p, itemStruct* i) { ///스텍이나 큐 구조라서
         p->playerInven.rear = 0;
         p->playerInven.front = 0;
     }
-    p->playerHp += i->hpIncrement;
-    p->playerDamage += i->damageIncrement;
-    p->playerArmor += i->armorIncrement;
-    p->playerCriPer += i->criPerIncrement;
+    p->hp += i->hpIncrement;
+    p->atk += i->damageIncrement;
+    p->df += i->armorIncrement;
+    p->ct += i->criPerIncrement;
     p->playerInven.arr[p->playerInven.front] = i->itemName;
     p->playerInven.invenCode[p->playerInven.front] = i->itemCode;
     p->playerInven.front = (p->playerInven.front - 1 + MAX_INVEN_SIZE) % MAX_INVEN_SIZE;
 }
 
-void add_rear(playerStats* p, itemStruct* i) { ///스텍이나 큐에서 push와 enqueue로 사용
+void add_rear(Caracter* p, itemStruct* i) { ///스텍이나 큐에서 push와 enqueue로 사용
     if (is_full(p)) {
         printf("인벤토리가 가득 찼습니다.\n");
         return;
@@ -84,16 +80,16 @@ void add_rear(playerStats* p, itemStruct* i) { ///스텍이나 큐에서 push와
         p->playerInven.rear = 0;
         p->playerInven.front = 0;
     }
-    p->playerHp += i->hpIncrement;
-    p->playerDamage += i->damageIncrement;
-    p->playerArmor += i->armorIncrement;
-    p->playerCriPer += i->criPerIncrement;
+    p->hp += i->hpIncrement;
+    p->atk += i->damageIncrement;
+    p->df += i->armorIncrement;
+    p->ct += i->criPerIncrement;
     p->playerInven.rear = (p->playerInven.rear + 1) % MAX_INVEN_SIZE;
     p->playerInven.arr[p->playerInven.rear] = i->itemName;
     p->playerInven.invenCode[p->playerInven.rear] = i->itemCode;
 }
 
-void codeMatching_rear(playerStats* p) {
+void codeMatching_rear(Caracter* p) {
     if (p->playerInven.invenCode[p->playerInven.rear] == 0) {
         increment[0] = 1;
         increment[1] = 1;
@@ -121,7 +117,7 @@ void codeMatching_rear(playerStats* p) {
     //아이템 개수에 따른 분기문 작성
 }
 
-void codeMatching_front(playerStats* p) {
+void codeMatching_front(Caracter* p) {
     if (p->playerInven.invenCode[p->playerInven.front + 1] == 0) {
         increment[0] = 1;
         increment[1] = 1;
@@ -149,7 +145,7 @@ void codeMatching_front(playerStats* p) {
     //아이템 개수에 따른 분기문 작성
 }
 
-void delete_rear(playerStats* p) { ///스텍에서 pop으로 사용
+void delete_rear(Caracter* p) { ///스텍에서 pop으로 사용
     if (is_stack != 1) {
         printf("큐 인벤토리이므로 사용 불가\n");
         return;
@@ -160,15 +156,15 @@ void delete_rear(playerStats* p) { ///스텍에서 pop으로 사용
     }
     codeMatching_rear(p); ///실행되면 increment가 삭제되는 아이템이 증가시키는 스텟이 되어 해당 수치만큼 플레이어 스텟에서 제거
     int prev = p->playerInven.rear;
-    p->playerHp -= increment[0];
-    p->playerDamage -= increment[1];
-    p->playerArmor -= increment[2];
-    p->playerCriPer -= increment[3];
+    p->hp -= increment[0];
+    p->atk -= increment[1];
+    p->df -= increment[2];
+    p->ct -= increment[3];
     p->playerInven.rear = (p->playerInven.rear - 1 + MAX_INVEN_SIZE) % MAX_INVEN_SIZE;
     p->playerInven.arr[prev] = "";
 }
 
-void delete_front(playerStats* p) { ///큐에서 dequeue로 사용
+void delete_front(Caracter* p) { ///큐에서 dequeue로 사용
     if (is_stack == 1) {
         printf("스택 인벤토리이므로 사용 불가\n");
         return;
@@ -178,10 +174,10 @@ void delete_front(playerStats* p) { ///큐에서 dequeue로 사용
         return;
     }
     codeMatching_front(p);
-    p->playerHp -= increment[0];
-    p->playerDamage -= increment[1];
-    p->playerArmor -= increment[2];
-    p->playerCriPer -= increment[3];
+    p->hp -= increment[0];
+    p->atk -= increment[1];
+    p->df -= increment[2];
+    p->ct -= increment[3];
     p->playerInven.front = (p->playerInven.front + 1) % MAX_INVEN_SIZE;
     p->playerInven.arr[p->playerInven.front] = " ";
 }
@@ -212,10 +208,6 @@ void start_scene() //0
         }
     }
 }
-
-typedef struct storyScript {
-    char script[100];
-}storyScript;
 
 void story_scene() //1
 {
@@ -263,15 +255,6 @@ void story_scene() //1
     }
 
 }
-
-typedef struct iconUI { //각 UI 식별코드 및 방향키 입력 시 이동할 주소 내장
-    int iconCode; //0은 아이템, 1은 선택 UI
-    int itemCode; //아이템이면 종류
-    struct iconUI* leftLink; //상하좌우 주소
-    struct iconUI* rightLink;
-    struct iconUI* topLink;
-    struct iconUI* bottomLink;
-}iconUI;
 
 iconUI* swichingBold(iconUI* bold, int direction)//해당 방향으로 볼드 아이콘 주소 옮기기
 {
@@ -463,7 +446,7 @@ int coin = 500; //임시화폐 변수*******************************************
 //물건 아이콘 볼드 처리 시 오른쪽에 물건 설명 출력
 
 
-void store_scene(playerStats* p) //3
+void store_scene(Caracter* p) //3
 {
     int value = 0; //안쓰는듯
     int keyInput = 0; //키입력 저장
@@ -551,10 +534,10 @@ void store_scene(playerStats* p) //3
         //화면 그리기
 
         /*
-        * p->playerHp -= increment[0];
-    p->playerDamage -= increment[1];
-    p->playerArmor -= increment[2];
-    p->playerCriPer -= increment[3];
+        * p->hp -= increment[0];
+    p->atk -= increment[1];
+    p->df -= increment[2];
+    p->ct -= increment[3];
         */
         system("cls");
 
@@ -812,22 +795,22 @@ void store_scene(playerStats* p) //3
                             {
                             case 0:
                             {
-                                p->playerHp += 50;
+                                p->hp += 50;
                                 break;
                             }
                             case 1:
                             {
-                                p->playerArmor += 5;
+                                p->df += 5;
                                 break;
                             }
                             case 2:
                             {
-                                p->playerCriPer += 5;
+                                p->ct += 5;
                                 break;
                             }
                             case 3:
                             {
-                                p->playerDamage += 5;
+                                p->atk += 5;
                                 break;
                             }
                             default:
@@ -865,7 +848,7 @@ void store_scene(playerStats* p) //3
     }
 }
 
-void status_scene(playerStats* p) //4
+void status_scene(Caracter* p) //4
 {
     int keyInput;
     int anchorX = 4; //gotoxy 시작할 좌표 초기화용
@@ -879,10 +862,10 @@ void status_scene(playerStats* p) //4
     {
         system("cls"); //화면 초기화
 
-        printf("체력 : %.2lf\n", p->playerHp);
-        printf("공격력 : %.2lf\n", p->playerDamage);
-        printf("방어력 : %.2lf\n", p->playerArmor);
-        printf("치명타 : %.2lf%%\n", p->playerCriPer);
+        printf("체력 : %.2lf\n", p->hp);
+        printf("공격력 : %.2lf\n", p->atk);
+        printf("방어력 : %.2lf\n", p->df);
+        printf("치명타 : %.2lf%%\n", p->ct);
 
         printf("\n 스택 상태 시 %s(이)가 사라집니다.\n", p->playerInven.arr[p->playerInven.rear]);
         printf("큐 상태 시 %s(이)가 사라집니다.\n", p->playerInven.arr[(p->playerInven.front + 1) % MAX_INVEN_SIZE]);
@@ -1036,32 +1019,32 @@ void temp_item_scene() //-1 임시 인벤 아이템 삽입 함수
     {
     case 1:
     {
-        add_rear(&p1, &i1);
+        add_rear(&caracter, &i1);
         break;
     }
     case 2:
     {
-        add_rear(&p1, &i2);
+        add_rear(&caracter, &i2);
         break;
     }
     case 3:
     {
-        add_rear(&p1, &i3);
+        add_rear(&caracter, &i3);
         break;
     }
     case 4:
     {
-        add_rear(&p1, &i4);
+        add_rear(&caracter, &i4);
         break;
     }
     case 5:
     {
-        delete_rear(&p1);
+        delete_rear(&caracter);
         break;
     }
     case 6:
     {
-        delete_front(&p1);
+        delete_front(&caracter);
         break;
     }
     case 7:
@@ -1084,14 +1067,10 @@ void temp_item_scene() //-1 임시 인벤 아이템 삽입 함수
     sceneCounter = select_input(0, maxScene);
 }
 
-void gotoxy(int x, int y)
-{
-    COORD pos = { x,y };
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-}
-
 int main()
 {
+    CursorView(0);
+
     while (1)
     {
         switch (sceneCounter)
@@ -1113,17 +1092,24 @@ int main()
         }
         case 3:
         {
-            store_scene(&p1);
+            store_scene(&caracter);
             break;
         }
         case 4:
         {
-            status_scene(&p1);
+            status_scene(&caracter);
             break;
         }
         case 5:
         {
-            stage_select_scene();
+            running = 1;
+            Dungeon();
+
+            if (is_escape == 1 && flag8 == 0)
+            {
+                stage_num++;
+                flag8 = 1;
+            }
             break;
         }
         case 6:
