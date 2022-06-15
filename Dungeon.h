@@ -1765,4 +1765,16 @@ void Dungeon()
         printf("게임오버\n");
         system("pause");
     }
+
+    if (is_clear == 1)
+    {
+        system("cls");
+        gotoxy(0, 0);
+        printf("마왕을 물리쳤지만 인벤토리의 저주는 풀리지 않았다...");
+        otoxy(0, 1);
+        printf("아마 마왕의 배후에 뭔가가 더있는것 같다...");
+        otoxy(0, 2);
+        printf("[GAME CLEAR]");
+        system("pause");
+    }
 }
